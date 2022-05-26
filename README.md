@@ -12,14 +12,14 @@ Installation of dependencies and construction of an appropriate environment is m
 However, `gw-detectors` and `gw-distributions` can be cloned and installed via
 
 ```
-    ./install
+./install
 ```
 
 ## dependencies
 
   * [gw-distributions](https://git.ligo.org/reed.essick/gw-distributions)
   * [gw-detectors](https://git.ligo.org/reed.essick/gw-detectors)
-  * lalsuite **add a link to the source**
+  * [lalsuite](https://wiki.ligo.org/Computing/LALSuiteInstall)
 
 ## authors
 
