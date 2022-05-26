@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+
+"""a simple executable to draw samples from the detectable population
+"""
+__author__ = "Reed Essick (reed.essick@gmail.com)"
+
+#-------------------------------------------------
+
+from argparse import ArgumentParser
+
+### non-standard libraries
+from gwdistributions import parse as gwdist_parse
+from gwdistributions.transforms import (OptimalSNR, ObservedSNRGivenOptimalSNR)
+from gwdetectors import parse as gwdet_parse
+
+#-------------------------------------------------
+
+parser = ArgumentParser(description=__doc__)
+
+#---
+
+parser.add_argument('network', type=str)
+parser.add_argument('population', type=str)
+
+#---
+
+sgroup = parser.add_argument_group('snr calculation options')
+
+sgroup.add_argument('--flow', default=16.0, type=float,
+    help='lowest frequency included in SNR calculation. DEFAULT=16 Hz')
+sgroup.add_argument('--fhigh', default=2048.0, type=float,
+    help='highest frequency included in SNR calculation. DEFAULT=2048 Hz')
+sgroup.add_argument('--deltaf', default=1./128, type=float,
+    help='frequency spacing in SNR calculation. DEFAULT=1/(128 sec)')
+sgroup.add_argument('--approximant', default='IMRPhenomXPHM', type=str,
+    help='approximant used throughout the entire mass range. DEFAULT=IMRPhenomXPHM')
+
+#---
+
+wgroup = parser.add_argument_group('detection and workflow options')
+
+wgroup.add_argument('-n', '--num-samples', default=1000, type=int)
+wgroup.add_argument('--network-snr-threshold', default=8.0, type=float)
+
+#---
+
+ogroup = parser.add_argument_group('output options')
+
+ogroup.add_argument('-v', '--verbose', default=False, action='store_true')
+
+#---
+
+args = parser.parse_args()
+
+#-------------------------------------------------
+
+# instantiate detector network
+network = gwdet_parse.parse(args.network, verbose=args.verbose)
+
+# instantiate event generator
+generator = gwdist_parse.parse(
+    args.population,
+    verbose=args.verbose,
+    store_logprob=False,
+    store_factored_logprob=True,
+)
+
+#------------------------
+
+# add transforms that compute optimal, observed SNRs
+generator.append_transform(OptimalSNR(
+    network,
+    args.flow,
+    args.fhigh,
+    deltaf=args.deltaf,
+    fref=100, # Hz
+    approximant=args.approximant,
+))
+
+generators.append_transform(ObservedSNRGivenOptimalSNR(
+    detectors=[det.name for det in network.detectors],
+))
+
+#-------------------------------------------------
+
+raise NotImplementedError('''\
+draw events without SNR cut
+write to disk
+flush generator
+append conditional based on oberved network snr
+draw events with SNR cut
+write to disk
+''')
