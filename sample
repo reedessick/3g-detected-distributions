@@ -84,10 +84,11 @@ generators.append_transform(ObservedSNRGivenOptimalSNR(
 #-------------------------------------------------
 
 raise NotImplementedError('''\
-draw events without SNR cut
-write to disk
-flush generator
-append conditional based on oberved network snr
-draw events with SNR cut
-write to disk
+draw events without SNR cut: generator.generate(n_event=args.num_samples, verbose=args.verbose)
+write to disk: generator.write(path)
+flush generator: generator.flush_events()
+
+append conditional based on oberved network snr: generator.append_conditional(lambda event: ...)
+draw events with SNR cut: generator.generate(n_event=args.num_samples, verbose=args.verbose)
+write to disk: generator.write(path)
 ''')
