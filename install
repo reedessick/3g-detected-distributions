@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# a simple script to install the relevant libraries
+# Reed Essick (reed.essick@gmail.com)
+
+#-------------------------------------------------
+
+. ./env.sh
+
+#-------------------------------------------------
+
+# make libraries
+mkdir -p $srcdir
+mkdir -p $optdir
+mkdir -p $libdir
+
+# install libraries from source
+pushd $srcdir
+
+for lib in gw-detectors gw-distributions
+do
+    git clone https://git.ligo.org/reed.essick/$lib
+    pushd $lib
+    python3 setup.py install --prefix $optdir 
+    popd
+done
+
+popd
+
+# install libraries from pip
+#pip3 install lalsuite --prefix $optdir --ignore-installed
