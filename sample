@@ -6,10 +6,12 @@ __author__ = "Reed Essick (reed.essick@gmail.com)"
 
 #-------------------------------------------------
 
+import os
+
 from argparse import ArgumentParser
 
 ### non-standard libraries
-from gwdistributions import parse as gwdist_parse
+from gwdistributions.parse import parse as gwdist_parse
 from gwdistributions.transforms import (OptimalSNR, ObservedSNRGivenOptimalSNR)
 from gwdetectors import parse as gwdet_parse
 
@@ -30,8 +32,8 @@ sgroup.add_argument('--flow', default=16.0, type=float,
     help='lowest frequency included in SNR calculation. DEFAULT=16 Hz')
 sgroup.add_argument('--fhigh', default=2048.0, type=float,
     help='highest frequency included in SNR calculation. DEFAULT=2048 Hz')
-sgroup.add_argument('--deltaf', default=1./128, type=float,
-    help='frequency spacing in SNR calculation. DEFAULT=1/(128 sec)')
+sgroup.add_argument('--deltaf', default=1./16, type=float,
+    help='frequency spacing in SNR calculation. DEFAULT=1/(16 sec)')
 sgroup.add_argument('--approximant', default='IMRPhenomXPHM', type=str,
     help='approximant used throughout the entire mass range. DEFAULT=IMRPhenomXPHM')
 
@@ -47,18 +49,25 @@ wgroup.add_argument('--network-snr-threshold', default=8.0, type=float)
 ogroup = parser.add_argument_group('output options')
 
 ogroup.add_argument('-v', '--verbose', default=False, action='store_true')
+ogroup.add_argument('-o', '--output-dir', default='.', type=str)
+ogroup.add_argument('-t', '--tag', default='', type=str)
 
 #---
 
 args = parser.parse_args()
 
+os.makedirs(args.output_dir, exist_ok=True)
+
+if args.tag:
+    args.tag = "_"+args.tag
+
 #-------------------------------------------------
 
 # instantiate detector network
-network = gwdet_parse.parse(args.network, verbose=args.verbose)
+network = gwdet_parse(args.network, verbose=args.verbose)
 
 # instantiate event generator
-generator = gwdist_parse.parse(
+generator = gwdist_parse(
     args.population,
     verbose=args.verbose,
     store_logprob=False,
@@ -68,6 +77,13 @@ generator = gwdist_parse.parse(
 #------------------------
 
 # add transforms that compute optimal, observed SNRs
+if args.verbose:
+    print('''adding SNR calculation with:
+    flow   = %.3f Hz
+    fhigh  = %.3f Hz
+    deltaf = %.3f Hz
+    approximant = %s'''%(args.flow, args.fhigh, args.deltaf, args.approximant))
+
 generator.append_transform(OptimalSNR(
     network,
     args.flow,
@@ -77,18 +93,50 @@ generator.append_transform(OptimalSNR(
     approximant=args.approximant,
 ))
 
-generators.append_transform(ObservedSNRGivenOptimalSNR(
+generator.append_transform(ObservedSNRGivenOptimalSNR(
     detectors=[det.name for det in network.detectors],
 ))
 
 #-------------------------------------------------
 
-raise NotImplementedError('''\
-draw events without SNR cut: generator.generate(n_event=args.num_samples, verbose=args.verbose)
-write to disk: generator.write(path)
-flush generator: generator.flush_events()
+# generate samples from the drawn distribution
 
-append conditional based on oberved network snr: generator.append_conditional(lambda event: ...)
-draw events with SNR cut: generator.generate(n_event=args.num_samples, verbose=args.verbose)
-write to disk: generator.write(path)
-''')
+### actually draw sample
+if args.verbose:
+    print("drawing %d samples without SNR threshold applied"%args.num_samples)
+generator.generate(n_event=args.num_samples, verbose=args.verbose)
+
+### write to disk
+path = os.path.join(
+    args.output_dir,
+    os.path.basename(__file__)+'-draw%s.hdf5'%args.tag,
+)
+if args.verbose:    
+    print('saving : '+path)
+generator.write(path)
+
+#-------------------------------------------------
+
+# generate samples from detected distribution
+
+### remove events were already generated
+generator.flush_events()
+
+### add SNR threshold
+if args.verbose:
+    print("configuring threshold: observed_snr_net >= %.3f"%args.network_snr_threshold)
+generator.append_conditional(lambda event: event['observed_snr_net'] >= args.network_snr_threshold)
+
+### actually draw samples
+if args.verbose:
+    print("drawing %d samples with SNR threshold applied"%args.num_samples)
+generator.generate(n_event=args.num_samples, verbose=args.verbose)
+
+### write to disk
+path = os.path.join(
+    args.output_dir,
+    os.path.basename(__file__)+'-detected%s.hdf5'%args.tag,
+)
+if args.verbose:    
+    print('saving : '+path)
+generator.write(path)
