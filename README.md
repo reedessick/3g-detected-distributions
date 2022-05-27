@@ -25,7 +25,7 @@ Once the code is installed, you should be able to draw samples from the detected
 ./sample detector-network.ini astrophysical-population.ini -v --num-samples 1000
 ```
 
-This should take O(XXX) sec to complete and will produce 2 files with identical formats.
+This should take approximately 6 min to complete and will produce 2 files with identical formats.
 
   * `sample-draw.hdf5`
   * `sample-detected.hdf5`
