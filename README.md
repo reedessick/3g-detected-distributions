@@ -97,6 +97,8 @@ events                   Dataset {100/100}
                } 442 bytes
 ```
 
+The script will also produce several summary plots for each distribution.
+
 ## authors
 
   * Reed Essick (reed.essick@gmail.com)
