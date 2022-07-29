@@ -5,9 +5,9 @@
 
 #--------------------------------------------
 
-NUM_SAMPLES=100                    ### the number of samples to draw from each distribution
-NETWORKS="hlv"                    ### the detector networks to consider
-POPULATIONS="detected" ### the populations to consider for each network
+NUM_SAMPLES=1000                     ### the number of samples to draw from each distribution
+NETWORKS="ce hlv"                    ### the detector networks to consider
+POPULATIONS="astrophysical detected" ### the populations to consider for each network
 
 #--------------------------------------------
 

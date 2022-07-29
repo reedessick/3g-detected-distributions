@@ -26,7 +26,7 @@ Once the code is installed, you should be able to draw samples from the astrophy
 ./sample
 ```
 
-This will generate 10000 samples from each distribution and should take approximately **XXX** min in total to complete.
+This will generate 1000 samples from each distribution and should take approximately 100 min in total to complete (dominated by sampling from hlv-detected-population).
 It will produce 4 files with identical formats:
 
   * `hlv-astrophysical-population.hdf5`
